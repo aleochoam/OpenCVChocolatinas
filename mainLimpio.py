@@ -2,7 +2,10 @@ import cv2
 from imutils import resize
 import argparse
 
-cont
+contador = {}
+kernelOP = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+kernelCL = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11))
+
 
 def find_centroid(contour):
     M = cv2.moments(contour)
@@ -22,7 +25,7 @@ def parse_arguments():
 def main(args):
 
     if args.get("video", None) is None:
-        capture = cv2.VideoCapture(0)
+        capture = cv2.VideoCapture(1)
     else:
         capture = cv2.VideoCapture(args.get("video"))
 
@@ -38,10 +41,11 @@ def main(args):
             break
 
         frame = resize(frame, width=500)
-        thresh = fgbg.apply(frame)
 
-        thresh = cv2.erode(thresh, None, iterations=2)
-        thresh = cv2.dilate(thresh, None, iterations=2)
+        thresh = fgbg.apply(frame)
+        thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernelOP, iterations=2)
+        thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernelCL, iterations=2)
+
         _, contours, _ = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
 
@@ -62,7 +66,7 @@ def main(args):
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
         cv2.imshow("Original", frame)
-        # cv2.imshow("ROI", )
+        cv2.imshow("thresh", thresh)
 
         # Escape para terminar
         k = cv2.waitKey(5) & 0xFF
