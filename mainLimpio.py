@@ -1,8 +1,8 @@
 from imutils import resize
 from time import time
+import numpy as np
 import cv2
 import argparse
-
 
 contador = dict()
 
@@ -18,10 +18,29 @@ contador["nr_frunas_roja"] = 0
 contador["nr_frunas_amarilla"] = 0
 contador["tt"] = 0
 
-
-
 kernelOP = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
 kernelCL = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11))
+
+lim_colores = [
+        ([170, 120, 120], [230, 255, 255], "fruna roja"), #Rojo
+        ([20, 160, 160], [50, 255, 255], "fruna amarilla"), #AmARILLO
+        ([110,50,50], [130,255,255], "jet azul"), #Azul
+        ([0, 0, 100], [240, 3, 100], "jumbo blanca"), #Blanco
+        ([0, 0, 0], [0, 75, 65], "jumbo negra"), #Negro
+        # ([33, 100, 100], [39, 100, 100]), #Naranja
+        ([120, 75, 80], [120, 100, 100], "fruna verde"), #Verde
+    ]
+
+
+def contar_blancos(roi):
+    return cv2.countNonZero(roi)
+
+
+def generar_mascara(lower, upper, roi):
+    hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(hsv, lower, upper)
+    # res = cv2.bitwise_and(roi, roi, mask=mask)
+    return mask
 
 
 def find_centroid(contour):
@@ -68,13 +87,13 @@ def main(args):
         contours = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
 
         # Si se encuentra un contorno en la imagen
-        if len(contours) > 0 and cv2.contourArea(contours[0]) > 200:
+        if len(contours) > 0 and cv2.contourArea(contours[0]) > 3000:
             tiempo_desactivado = time()
             cnt = contours[0]
             (x, y, w, h) = cv2.boundingRect(cnt)
-            cx, cy = find_centroid(cnt)
+            # cx, cy = find_centroid(cnt)
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            cv2.circle(frame, (cx, cy), 5, (255, 0, 0))
+            # cv2.circle(frame, (cx, cy), 5, (255, 0, 0))
 
             roi = frame[y:y+h, x:x+w]
 
@@ -95,15 +114,24 @@ def main(args):
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
         if roi is not None:
-            cv2.imshow("roi", roi)
-            #cv2.waitKey(0)
-        else:
-            pass
-            # cv2.destroyWindow("roi")
+            max_blancos = 0
+            nombre_mascara = ""
+            for lower, upper, nombre in lim_colores:
+                lower = np.array(lower, dtype="uint8")
+                upper = np.array(upper, dtype="uint8")
+                mask = generar_mascara(lower, upper, roi)
+                # cv2.imshow("mask", mask)
+
+                blancos_mascara = contar_blancos(mask)
+                if max_blancos < blancos_mascara:
+                    max_blancos = blancos_mascara
+                    nombre_mascara = nombre
+
+            print(nombre_mascara)
 
         cv2.imshow("Original", frame)
-        cv2.imshow("thresh", thresh)
-
+        cv2.imshow("rojo", generar_mascara(np.array(lim_colores[0][0]), np.array(lim_colores[0][1]), frame))
+        cv2.imshow("amarillo", generar_mascara(np.array(lim_colores[1][0]), np.array(lim_colores[1][1]), frame))
         # Escape para terminar
         k = cv2.waitKey(5) & 0xFF
         if k == 27:
