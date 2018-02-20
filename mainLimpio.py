@@ -1,8 +1,25 @@
-import cv2
 from imutils import resize
+from time import time
+import cv2
 import argparse
 
-contador = {}
+
+contador = dict()
+
+contador["nr_jet_azul"] = 0
+contador["nr_flow_negra"] = 0
+contador["nr_flow_blanca"] = 0
+contador["nr_jumbo_naranja"] = 0
+contador["nr_jumbo_roja"] = 0
+contador["nr_chocorramo"] = 0
+contador["nr_frunas_verde"] = 0
+contador["nr_frunas_naranja"] = 0
+contador["nr_frunas_roja"] = 0
+contador["nr_frunas_amarilla"] = 0
+contador["tt"] = 0
+
+
+
 kernelOP = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
 kernelCL = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11))
 
@@ -33,6 +50,7 @@ def main(args):
     found = False
     cont_chocolatinas = 0
 
+    tiempo_desactivado = time()
     while True:
         grabbed, frame = capture.read()
 
@@ -49,21 +67,39 @@ def main(args):
         _, contours, _ = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
 
+        # Si se encuentra un contorno en la imagen
         if len(contours) > 0 and cv2.contourArea(contours[0]) > 200:
+            tiempo_desactivado = time()
             cnt = contours[0]
             (x, y, w, h) = cv2.boundingRect(cnt)
             cx, cy = find_centroid(cnt)
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
             cv2.circle(frame, (cx, cy), 5, (255, 0, 0))
 
+            roi = frame[y:y+h, x:x+w]
+
             if not found:
                 cont_chocolatinas = cont_chocolatinas+1
                 found = True
+
+        # Si no hay contornos
         else:
+
+            # Se verifica que no hayan transcurrido 3 segundos
+            if abs(tiempo_desactivado - time()) > 3.0:
+                break
             found = False
+            roi = None
 
         cv2.putText(frame, "Chocolatinas encontradas: {}".format(cont_chocolatinas), (10, 20),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+
+        if roi is not None:
+            cv2.imshow("roi", roi)
+            #cv2.waitKey(0)
+        else:
+            pass
+            # cv2.destroyWindow("roi")
 
         cv2.imshow("Original", frame)
         cv2.imshow("thresh", thresh)
@@ -78,4 +114,7 @@ def main(args):
 
 
 if __name__ == '__main__':
+    tiempoInicial = time()
     main(parse_arguments())
+    contador["tt"] = time() - tiempoInicial
+    print(contador)
