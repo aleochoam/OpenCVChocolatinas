@@ -22,13 +22,19 @@ kernelOP = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
 kernelCL = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11))
 
 lim_colores = [
-        ([170, 120, 120], [230, 255, 255], "fruna roja"), #Rojo
-        ([20, 160, 160], [50, 255, 255], "fruna amarilla"), #AmARILLO
-        ([110,50,50], [130,255,255], "jet azul"), #Azul
-        ([0, 0, 100], [240, 3, 100], "jumbo blanca"), #Blanco
-        ([0, 0, 0], [0, 75, 65], "jumbo negra"), #Negro
-        # ([33, 100, 100], [39, 100, 100]), #Naranja
-        ([120, 75, 80], [120, 100, 100], "fruna verde"), #Verde
+    ([88, 31, 0], [130, 255, 255], "nr_jet_azul"), #Azul
+    ([0, 0, 0], [0, 75, 65], "nr_flow_negra"), #Negro
+    ([0, 0, 100], [240, 3, 100], "nr_flow_blanca"), #Blanco
+    ([0, 0, 0], [37, 255, 255], "nr_jumbo_roja"), #Rojo
+    #jumbo naranja
+    #jumbo roja
+    #chocorramo
+    ([120, 75, 80], [120, 100, 100], "nr_frunas_verde"),  # Verde
+    #frunas naranja
+    #frunas roja
+    ([20, 160, 160], [50, 255, 255], "nr_frunas_amarilla"), #Amarillo
+
+    # ([33, 100, 100], [39, 100, 100], "milo"), #Naranja
     ]
 
 
@@ -91,15 +97,31 @@ def main(args):
             tiempo_desactivado = time()
             cnt = contours[0]
             (x, y, w, h) = cv2.boundingRect(cnt)
-            # cx, cy = find_centroid(cnt)
+            cx, cy = find_centroid(cnt)
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            # cv2.circle(frame, (cx, cy), 5, (255, 0, 0))
+            cv2.circle(frame, (cx, cy), 5, (255, 0, 0))
 
-            roi = frame[y:y+h, x:x+w]
+            if not found and cx > frame.shape[1]/2:
+                roi = frame[y:y+h, x:x+w]
 
-            if not found:
-                cont_chocolatinas = cont_chocolatinas+1
                 found = True
+                if roi is not None:
+                    max_blancos = 0
+                    nombre_mascara = ""
+
+                    for lower, upper, nombre in lim_colores:
+                        lower = np.array(lower, dtype="uint8")
+                        upper = np.array(upper, dtype="uint8")
+                        mask = generar_mascara(lower, upper, roi)
+
+                        blancos_mascara = contar_blancos(mask)
+                        if max_blancos < blancos_mascara:
+                            max_blancos = blancos_mascara
+                            nombre_mascara = nombre
+
+                    contador[nombre_mascara] = contador[nombre_mascara] + 1
+                    print(nombre_mascara)
+                    cv2.imshow("roi", roi)
 
         # Si no hay contornos
         else:
@@ -110,28 +132,17 @@ def main(args):
             found = False
             roi = None
 
-        cv2.putText(frame, "Chocolatinas encontradas: {}".format(cont_chocolatinas), (10, 20),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+        dist_top = 10
+        for key, value in contador.items():
+            texto = str(key) + ": " + str(value)
+            cv2.putText(frame, texto, (10, dist_top), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+            dist_top = dist_top + 20
 
-        if roi is not None:
-            max_blancos = 0
-            nombre_mascara = ""
-            for lower, upper, nombre in lim_colores:
-                lower = np.array(lower, dtype="uint8")
-                upper = np.array(upper, dtype="uint8")
-                mask = generar_mascara(lower, upper, roi)
-                # cv2.imshow("mask", mask)
-
-                blancos_mascara = contar_blancos(mask)
-                if max_blancos < blancos_mascara:
-                    max_blancos = blancos_mascara
-                    nombre_mascara = nombre
-
-            print(nombre_mascara)
 
         cv2.imshow("Original", frame)
-        cv2.imshow("rojo", generar_mascara(np.array(lim_colores[0][0]), np.array(lim_colores[0][1]), frame))
-        cv2.imshow("amarillo", generar_mascara(np.array(lim_colores[1][0]), np.array(lim_colores[1][1]), frame))
+        cv2.imshow("azul", generar_mascara(np.array(lim_colores[0][0]), np.array(lim_colores[0][1]), frame))
+        cv2.imshow("rojo", generar_mascara(np.array(lim_colores[3][0]), np.array(lim_colores[3][1]), frame))
+
         # Escape para terminar
         k = cv2.waitKey(5) & 0xFF
         if k == 27:
