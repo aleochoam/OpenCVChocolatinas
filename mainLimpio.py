@@ -11,30 +11,17 @@ contador["nr_flow_negra"] = 0
 contador["nr_flow_blanca"] = 0
 contador["nr_jumbo_naranja"] = 0
 contador["nr_jumbo_roja"] = 0
-contador["nr_chocorramo"] = 0
-contador["nr_frunas_verde"] = 0
-contador["nr_frunas_naranja"] = 0
-contador["nr_frunas_roja"] = 0
-contador["nr_frunas_amarilla"] = 0
 contador["tt"] = 0
 
 kernelOP = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
 kernelCL = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11))
 
 lim_colores = [
-    ([88, 31, 0], [130, 255, 255], "nr_jet_azul"), #Azul
-    ([0, 0, 0], [0, 75, 65], "nr_flow_negra"), #Negro
-    ([0, 0, 100], [240, 3, 100], "nr_flow_blanca"), #Blanco
-    ([0, 0, 0], [37, 255, 255], "nr_jumbo_roja"), #Rojo
-    #jumbo naranja
-    #jumbo roja
-    #chocorramo
-    ([120, 75, 80], [120, 100, 100], "nr_frunas_verde"),  # Verde
-    #frunas naranja
-    #frunas roja
-    ([20, 160, 160], [50, 255, 255], "nr_frunas_amarilla"), #Amarillo
-
-    # ([33, 100, 100], [39, 100, 100], "milo"), #Naranja
+    ([88, 31, 0], [130, 255, 255], "nr_jet_azul"),
+    ([0, 0, 0],   [0, 75, 65],     "nr_flow_negra"),
+    ([0, 0, 100], [240, 3, 100],   "nr_flow_blanca"),
+    ([7, 86, 87], [20, 255, 255], "nr_jumbo_naranja"), #Naranja
+    ([0, 35, 0],  [21, 255, 255],  "nr_jumbo_roja"),
     ]
 
 
@@ -67,13 +54,12 @@ def parse_arguments():
 def main(args):
 
     if args.get("video", None) is None:
-        capture = cv2.VideoCapture(1)
+        capture = cv2.VideoCapture(0)
     else:
         capture = cv2.VideoCapture(args.get("video"))
 
     fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()
     found = False
-    cont_chocolatinas = 0
 
     tiempo_desactivado = time()
     while True:
@@ -106,6 +92,7 @@ def main(args):
 
                 found = True
                 if roi is not None:
+                    cv2.imshow("roi", roi)
                     max_blancos = 0
                     nombre_mascara = ""
 
@@ -115,19 +102,23 @@ def main(args):
                         mask = generar_mascara(lower, upper, roi)
 
                         blancos_mascara = contar_blancos(mask)
+                        #print(nombre, blancos_mascara)
+                        #cv2.imshow("mascara", mask)
+
+                        #cv2.waitKey(0)
                         if max_blancos < blancos_mascara:
                             max_blancos = blancos_mascara
                             nombre_mascara = nombre
 
                     contador[nombre_mascara] = contador[nombre_mascara] + 1
                     print(nombre_mascara)
-                    cv2.imshow("roi", roi)
+                    #print("--------------")
 
         # Si no hay contornos
         else:
 
             # Se verifica que no hayan transcurrido 3 segundos
-            if abs(tiempo_desactivado - time()) > 3.0:
+            if abs(time() - tiempo_desactivado) > 3.0:
                 break
             found = False
             roi = None
@@ -138,10 +129,8 @@ def main(args):
             cv2.putText(frame, texto, (10, dist_top), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
             dist_top = dist_top + 20
 
-
         cv2.imshow("Original", frame)
-        cv2.imshow("azul", generar_mascara(np.array(lim_colores[0][0]), np.array(lim_colores[0][1]), frame))
-        cv2.imshow("rojo", generar_mascara(np.array(lim_colores[3][0]), np.array(lim_colores[3][1]), frame))
+        cv2.imshow("thresh", thresh)
 
         # Escape para terminar
         k = cv2.waitKey(5) & 0xFF
