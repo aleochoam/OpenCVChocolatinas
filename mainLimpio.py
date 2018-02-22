@@ -18,10 +18,10 @@ kernelCL = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11))
 
 lim_colores = [
     ([88, 31, 0], [130, 255, 255], "nr_jet_azul"),
-    ([0, 0, 0],   [0, 75, 65],     "nr_flow_negra"),
-    ([0, 0, 100], [240, 3, 100],   "nr_flow_blanca"),
-    ([7, 86, 87], [20, 255, 255], "nr_jumbo_naranja"), #Naranja
-    ([0, 35, 0],  [21, 255, 255],  "nr_jumbo_roja"),
+    ([0, 90, 85],   [26, 255, 255],"nr_flow_negra"),
+    ([0, 0, 210], [10, 20, 255],   "nr_flow_blanca"),
+    ([11, 0, 214], [34, 255, 255], "nr_jumbo_naranja"), #Naranja
+    ([0, 106, 0],  [17, 255, 255],  "nr_jumbo_roja"),
     ]
 
 
@@ -125,12 +125,15 @@ def main(args):
 
         dist_top = 10
         for key, value in contador.items():
+            if key == "tt":
+                continue
+
             texto = str(key) + ": " + str(value)
             cv2.putText(frame, texto, (10, dist_top), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
             dist_top = dist_top + 20
 
         cv2.imshow("Original", frame)
-        cv2.imshow("thresh", thresh)
+        # cv2.imshow("thresh", thresh)
 
         # Escape para terminar
         k = cv2.waitKey(5) & 0xFF

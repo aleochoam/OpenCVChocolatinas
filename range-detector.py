@@ -8,6 +8,7 @@
 
 import cv2
 import argparse
+from imutils import resize
 from operator import xor
 
 
@@ -65,7 +66,7 @@ def main():
 
     if args['image']:
         image = cv2.imread(args['image'])
-
+        image = resize(image, width=200)
         if range_filter == 'RGB':
             frame_to_thresh = image.copy()
         else:
