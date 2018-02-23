@@ -102,3 +102,5 @@ ENV/
 
 videos/
 video2/
+fotos*
+snapshot.py

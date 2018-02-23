@@ -1,5 +1,6 @@
 from imutils import resize
 from time import time
+from tkinter import Button, Tk
 import numpy as np
 import cv2
 import argparse
@@ -18,9 +19,9 @@ kernelCL = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11))
 
 lim_colores = [
     ([88, 31, 0], [130, 255, 255], "nr_jet_azul"),
-    ([0, 90, 85],   [26, 255, 255],"nr_flow_negra"),
+    ([0, 90, 85],   [26, 255, 255], "nr_flow_negra"),
     ([0, 0, 210], [10, 20, 255],   "nr_flow_blanca"),
-    ([11, 0, 214], [34, 255, 255], "nr_jumbo_naranja"), #Naranja
+    ([11, 0, 214], [34, 255, 255], "nr_jumbo_naranja"),
     ([0, 106, 0],  [17, 255, 255],  "nr_jumbo_roja"),
     ]
 
@@ -37,9 +38,9 @@ def generar_mascara(lower, upper, roi):
 
 
 def find_centroid(contour):
-    M = cv2.moments(contour)
-    cx = int(M['m10'] / M['m00'])
-    cy = int(M['m01'] / M['m00'])
+    m = cv2.moments(contour)
+    cx = int(m['m10'] / m['m00'])
+    cy = int(m['m01'] / m['m00'])
 
     return cx, cy
 
@@ -51,8 +52,8 @@ def parse_arguments():
     return vars(ap.parse_args())
 
 
-def main(args):
-
+def clasificar():
+    args = parse_arguments()
     if args.get("video", None) is None:
         capture = cv2.VideoCapture(0)
     else:
@@ -70,6 +71,7 @@ def main(args):
             break
 
         frame = resize(frame, width=500)
+        frame = frame[50:3500, 75:400]
 
         thresh = fgbg.apply(frame)
         thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernelOP, iterations=2)
@@ -102,26 +104,26 @@ def main(args):
                         mask = generar_mascara(lower, upper, roi)
 
                         blancos_mascara = contar_blancos(mask)
-                        #print(nombre, blancos_mascara)
-                        #cv2.imshow("mascara", mask)
+                        # print(nombre, blancos_mascara)
+                        # cv2.imshow("mascara", mask)
 
-                        #cv2.waitKey(0)
+                        # cv2.waitKey(0)
                         if max_blancos < blancos_mascara:
                             max_blancos = blancos_mascara
                             nombre_mascara = nombre
 
                     contador[nombre_mascara] = contador[nombre_mascara] + 1
                     print(nombre_mascara)
-                    #print("--------------")
+                    # print("--------------")
 
         # Si no hay contornos
         else:
 
             # Se verifica que no hayan transcurrido 3 segundos
-            if abs(time() - tiempo_desactivado) > 3.0:
+            if abs(time() - tiempo_desactivado) > 10.0:
                 break
             found = False
-            roi = None
+            # roi = None
 
         dist_top = 10
         for key, value in contador.items():
@@ -144,8 +146,23 @@ def main(args):
     cv2.destroyAllWindows()
 
 
-if __name__ == '__main__':
-    tiempoInicial = time()
-    main(parse_arguments())
-    contador["tt"] = time() - tiempoInicial
+def iniciar_arduino():
+    pass
+
+
+def main():
+    btn.destroy()
+    iniciar_arduino()
+
+    tiempo_inicial = time()
+    clasificar()
+
+    contador["tt"] = time() - tiempo_inicial
     print(contador)
+
+
+if __name__ == '__main__':
+    root = Tk()
+    btn = Button(root, text="Start", command=main)
+    btn.pack(side="bottom", fill="both", expand="yes", padx="10", pady="10")
+    root.mainloop()
