@@ -1,9 +1,10 @@
 from imutils import resize
-from time import time
-from tkinter import Button, Tk
+from time import time, sleep
+from tkinter import Tk, Button, Label
 import numpy as np
 import cv2
 import argparse
+import serial
 
 contador = dict()
 
@@ -24,6 +25,22 @@ lim_colores = [
     ([11, 0, 214], [34, 255, 255], "nr_jumbo_naranja"),
     ([0, 106, 0],  [17, 255, 255],  "nr_jumbo_roja"),
     ]
+
+lim_colores_dia = [
+    ([88, 31, 0], [130, 255, 255], "nr_jet_azul"),
+    ([8, 16, 83],   [25, 192, 161], "nr_flow_negra"),
+    ([0, 0, 146], [170, 20, 255],   "nr_flow_blanca"),
+    ([10, 76, 179], [17, 255, 255], "nr_jumbo_naranja"),
+    ([0, 120, 157],  [9, 255, 255],  "nr_jumbo_roja"),
+    ]
+
+
+def actualizar_contador():
+    texto = ""
+    for key, value in contador.items():
+        item = key + ": " + str(value) + "\n"
+        texto = texto + item
+    lbl["text"] = texto
 
 
 def contar_blancos(roi):
@@ -55,7 +72,7 @@ def parse_arguments():
 def clasificar():
     args = parse_arguments()
     if args.get("video", None) is None:
-        capture = cv2.VideoCapture(0)
+        capture = cv2.VideoCapture(1)
     else:
         capture = cv2.VideoCapture(args.get("video"))
 
@@ -87,9 +104,9 @@ def clasificar():
             (x, y, w, h) = cv2.boundingRect(cnt)
             cx, cy = find_centroid(cnt)
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            cv2.circle(frame, (cx, cy), 5, (255, 0, 0))
+            # cv2.circle(frame, (cx, cy), 5, (255, 0, 0))
 
-            if not found and cx > frame.shape[1]/2:
+            if not found and cy > frame.shape[0]/2:
                 roi = frame[y:y+h, x:x+w]
 
                 found = True
@@ -98,7 +115,7 @@ def clasificar():
                     max_blancos = 0
                     nombre_mascara = ""
 
-                    for lower, upper, nombre in lim_colores:
+                    for lower, upper, nombre in lim_colores_dia:
                         lower = np.array(lower, dtype="uint8")
                         upper = np.array(upper, dtype="uint8")
                         mask = generar_mascara(lower, upper, roi)
@@ -113,6 +130,8 @@ def clasificar():
                             nombre_mascara = nombre
 
                     contador[nombre_mascara] = contador[nombre_mascara] + 1
+                    actualizar_contador()
+                    root.update_idletasks()
                     print(nombre_mascara)
                     # print("--------------")
 
@@ -125,15 +144,6 @@ def clasificar():
             found = False
             # roi = None
 
-        dist_top = 10
-        for key, value in contador.items():
-            if key == "tt":
-                continue
-
-            texto = str(key) + ": " + str(value)
-            cv2.putText(frame, texto, (10, dist_top), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-            dist_top = dist_top + 20
-
         cv2.imshow("Original", frame)
         # cv2.imshow("thresh", thresh)
 
@@ -142,12 +152,27 @@ def clasificar():
         if k == 27:
             break
 
+    finalizar_arduino()
     capture.release()
     cv2.destroyAllWindows()
+    # root.destroy()
 
 
 def iniciar_arduino():
-    pass
+    global arduino
+    print("Inicializando arduino")
+
+    com = "/dev/ttyACM0"
+    arduino = serial.Serial(com, 9600)
+    sleep(2)
+    arduino.write(b's')
+
+    # arduino.close()
+
+
+def finalizar_arduino():
+    arduino.write(b'f')
+    arduino.close()
 
 
 def main():
@@ -158,11 +183,17 @@ def main():
     clasificar()
 
     contador["tt"] = time() - tiempo_inicial
+    actualizar_contador()
     print(contador)
 
 
 if __name__ == '__main__':
+    arduino = None
     root = Tk()
     btn = Button(root, text="Start", command=main)
     btn.pack(side="bottom", fill="both", expand="yes", padx="10", pady="10")
+
+    lbl = Label(root, text="")
+    lbl.pack(side="left")
+    actualizar_contador()
     root.mainloop()
