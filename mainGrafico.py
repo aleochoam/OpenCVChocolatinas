@@ -36,10 +36,20 @@ lim_colores_dia = [
 
 
 def actualizar_contador():
-    texto = ""
-    for key, value in contador.items():
-        item = key + ": " + str(value) + "\n"
-        texto = texto + item
+
+    texto = "nr_jet_azul" + ": " + str(contador["nr_jet_azul"]) + "\n"
+    texto = texto + "nr_flow_negra" + ": " + str(contador["nr_flow_negra"]) + "\n"
+    texto = texto + "nr_flow_blanca" + ": " + str(contador["nr_flow_blanca"]) + "\n"
+    texto = texto + "nr_jumbo_naranja" + ": " + str(contador["nr_jumbo_naranja"]) + "\n"
+    texto = texto + "nr_jumbo_roja" + ": " + str(contador["nr_jumbo_roja"]) + "\n"
+
+    lbl["text"] = texto
+
+    # for key, value in contador.items():
+    #     if key == "tt":
+    #         continue
+    #     item = key + ": " + str(value) + "\n"
+    #     texto = texto + item
     lbl["text"] = texto
 
 
@@ -104,7 +114,7 @@ def clasificar():
             (x, y, w, h) = cv2.boundingRect(cnt)
             cx, cy = find_centroid(cnt)
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            # cv2.circle(frame, (cx, cy), 5, (255, 0, 0))
+            cv2.circle(frame, (cx, cy), 5, (255, 0, 0))
 
             if not found and cy > frame.shape[0]/2:
                 roi = frame[y:y+h, x:x+w]
@@ -121,10 +131,10 @@ def clasificar():
                         mask = generar_mascara(lower, upper, roi)
 
                         blancos_mascara = contar_blancos(mask)
-                        # print(nombre, blancos_mascara)
-                        # cv2.imshow("mascara", mask)
+                        #print(nombre, blancos_mascara)
+                        #cv2.imshow("mascara", mask)
 
-                        # cv2.waitKey(0)
+                        #cv2.waitKey(0)
                         if max_blancos < blancos_mascara:
                             max_blancos = blancos_mascara
                             nombre_mascara = nombre
@@ -139,7 +149,7 @@ def clasificar():
         else:
 
             # Se verifica que no hayan transcurrido 3 segundos
-            if abs(time() - tiempo_desactivado) > 10.0:
+            if abs(time() - tiempo_desactivado) > 3.0:
                 break
             found = False
             # roi = None
@@ -166,8 +176,6 @@ def iniciar_arduino():
     arduino = serial.Serial(com, 9600)
     sleep(2)
     arduino.write(b's')
-
-    # arduino.close()
 
 
 def finalizar_arduino():

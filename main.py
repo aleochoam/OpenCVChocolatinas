@@ -81,6 +81,7 @@ def main(args):
 
         # Si se encuentra un contorno en la imagen
         if len(contours) > 0 and cv2.contourArea(contours[0]) > 3000:
+            print(cv2.contourArea(contours[0]))
             tiempo_desactivado = time()
             cnt = contours[0]
             (x, y, w, h) = cv2.boundingRect(cnt)
@@ -103,17 +104,17 @@ def main(args):
                         mask = generar_mascara(lower, upper, roi)
 
                         blancos_mascara = contar_blancos(mask)
-                        #print(nombre, blancos_mascara)
-                        #cv2.imshow("mascara", mask)
+                        print(nombre, blancos_mascara)
+                        cv2.imshow("mascara", mask)
 
-                        #cv2.waitKey(0)
+                        cv2.waitKey(0)
                         if max_blancos < blancos_mascara:
                             max_blancos = blancos_mascara
                             nombre_mascara = nombre
 
                     contador[nombre_mascara] = contador[nombre_mascara] + 1
                     print(nombre_mascara)
-                    #print("--------------")
+                    print("--------------")
 
         # Si no hay contornos
         else:
@@ -134,7 +135,7 @@ def main(args):
             dist_top = dist_top + 20
 
         cv2.imshow("Original", frame)
-        # cv2.imshow("thresh", thresh)
+        cv2.imshow("thresh", thresh)
 
         # Escape para terminar
         k = cv2.waitKey(5) & 0xFF
