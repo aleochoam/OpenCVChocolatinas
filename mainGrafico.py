@@ -31,7 +31,8 @@ lim_colores_dia = [
     ([8, 16, 83],   [25, 192, 161], "nr_flow_negra"),
     ([0, 0, 146], [170, 20, 255],   "nr_flow_blanca"),
     ([10, 76, 179], [17, 255, 255], "nr_jumbo_naranja"),
-    ([0, 120, 157],  [9, 255, 255],  "nr_jumbo_roja"),
+    ([0, 120, 157],  [12, 255, 255],  "nr_jumbo_roja"),
+    #([0, 120, 157],  [9, 255, 255],  "nr_jumbo_roja"),
     ]
 
 
@@ -42,6 +43,7 @@ def actualizar_contador():
     texto = texto + "nr_flow_blanca" + ": " + str(contador["nr_flow_blanca"]) + "\n"
     texto = texto + "nr_jumbo_naranja" + ": " + str(contador["nr_jumbo_naranja"]) + "\n"
     texto = texto + "nr_jumbo_roja" + ": " + str(contador["nr_jumbo_roja"]) + "\n"
+    texto = texto + "tt" + ": " + str(contador["tt"]) + "\n"
 
     lbl["text"] = texto
 
@@ -149,7 +151,7 @@ def clasificar():
         else:
 
             # Se verifica que no hayan transcurrido 3 segundos
-            if abs(time() - tiempo_desactivado) > 3.0:
+            if abs(time() - tiempo_desactivado) >10.0:
                 break
             found = False
             # roi = None
@@ -162,7 +164,7 @@ def clasificar():
         if k == 27:
             break
 
-    finalizar_arduino()
+    #finalizar_arduino()
     capture.release()
     cv2.destroyAllWindows()
     # root.destroy()
@@ -185,7 +187,7 @@ def finalizar_arduino():
 
 def main():
     btn.destroy()
-    iniciar_arduino()
+    # iniciar_arduino()
 
     tiempo_inicial = time()
     clasificar()
